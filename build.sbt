@@ -6,6 +6,8 @@ organization := "com.jasonbaldridge"
 
 scalaVersion := "2.10.1"
 
+retrieveManaged := true
+
 resolvers += "IESL Release" at "http://dev-iesl.cs.umass.edu/nexus/content/groups/public"
 
 libraryDependencies ++= Seq(
