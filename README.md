@@ -23,34 +23,35 @@ $ ./build
 You will now be in SBT, which can compile the (minimal) code in this repository and ensure that all the relevant classes (e.g. from Mallet) are available. Now, you can learn topics for the 20 Newsgroups data above by doing the following:
 
 ```
-> run-main Maul 20news-bydate-train
+> run-main MalletLda 20news-bydate-train
+```
+  
+This will show Mallet estimating the topics and end with output.
+
+There are a number of options, which you can see by using the `--help` option with either MalletLda or FactorieLda
+
+```
+> run-main MalletLda --help
+> run-main FactorieLda --help
 ```
 
-This will show Mallet estimating the topics and end with output. It might get stuck at the end, in wich case just CTRL-C out of it and do `./build` again if you want to run things again.
 
-There are a number of options, which should be self-explanatory:
+## Completely non-rigorous time comparison
+
+I was interested in see how topic inference time varied between Mallet and Factorie for the same data. To compare this, I looked at the following configuration for each and varied the number of threads over 1, 2, 4, and 8.
 
 ```
-> run-main Maul --help
-[info] Running Maul --help
-
-For usage see below:
-
-  -i, --iterations  <arg>         The maximum number of iterations to perform.
-                                  (default = 1000)
-  -n, --num-topics  <arg>         The number of topics to use in the model.
-                                  (default = 100)
-  -o, --output  <arg>             The file to save the model as. If left
-                                  unspecified, it will write to standard output.
-                                  (default = stdout)
-  -t, --threads  <arg>            The number of threadls to use. (default = 4)
-  -w, --words-to-display  <arg>   The number of words per topic to show in the
-                                  output. (default = 20)
-      --help                      Show this message
-      --version                   Show version of this program
-
- trailing arguments:
-  data (required)   The directory containing the documents to use for computing
-                    the topic model.
+> run-main MalletLda --num-topics 200 --num-iterations 1000 --num-threads 1 20news-bydate-train
+> run-main FactorieLda --num-topics 200 --num-iterations 1000 --num-threads 1 --read-dirs 20news-bydate-train
 ```
 
+The time reported was based on getting the system time around the inference call, which should be sufficient to get a feel for the difference. 
+
+On a Linux box with a AMD Phenom(tm) II X4 960T Processor and 16GB memory:
+
+| System        |   1   |   2   |   4   |   8   |
+| ------------- | -----:| -----:| -----:| -----:|
+| Mallet        |  360  |  306  |  224  |  253  |
+| Factorie      |  388  |  549  | 1022  | 1102  |
+
+So, it is roughly comparable for the single thread case, but then Mallet gets better while Factorie gets worse. (It's entirely possible that I've set up something wrong for Factorie.)
