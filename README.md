@@ -51,19 +51,20 @@ The time reported was based on getting the system time around the inference call
 
 On a Linux box with a AMD Phenom(tm) II X4 960T Processor and 16GB memory, the number of seconds taken by Mallet and Factorie given varying number of threads is as follows:
 
-| System        |   1   |   2   |   4   |   8   |
-| ------------- | -----:| -----:| -----:| -----:|
-| Mallet        |  360  |  306  |  224  |  253  |
-| Factorie      |  388  |  549  | 1022  | 1102  |
+| System            |   1   |   2   |   4   |   8   |
+| ----------------- | -----:| -----:| -----:| -----:|
+| Mallet            |  360  |  306  |  224  |  253  |
+| Factorie-M6       |  388  |  549  | 1022  | 1102  |
+| Factorie-SNAPSHOT |  224  |  388  |  675  |  770  |
 
-So, it is roughly comparable for the single thread case, but then Mallet gets better while Factorie gets worse with more threads. (It's entirely possible that I've set up something wrong for Factorie.)
+So, it is roughly comparable for the single thread case, but then Mallet gets better while Factorie gets worse with more threads.
 
 Here are the numbers running on my MacBook pro (2.6 GHz Intel Core i5, 8 GB memory):
   
 | System        |   1   |   2   |   4   |
 | ------------- | -----:| -----:| -----:|
 | Mallet        |  280  |  284  |  227  |
-| Factorie      |  349  |  480  |  545  |
+| Factorie-M6   |  349  |  480  |  545  |
 
  Things don't get as worse with more threads for Factorie, but it is still the wrong direction.
 
