@@ -1,4 +1,7 @@
+package maul.topics
+
 import cc.factorie._
+import cc.factorie.variable._
 import cc.factorie.directed._
 import cc.factorie.app.strings.Stopwords
 import scala.collection.mutable.HashMap

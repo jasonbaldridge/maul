@@ -1,3 +1,5 @@
+package maul.topics
+
 object MalletLda {
   
   import java.io._
