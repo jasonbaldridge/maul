@@ -34,8 +34,8 @@ EOF
 CLASS=
 
 case $CMD in
-    factorie-lda) CLASS=FactorieLda;;
-    mallet-lda) CLASS=MalletLda;;
+    factorie-lda) CLASS=maul.topics.FactorieLda;;
+    mallet-lda) CLASS=maul.topics.MalletLda;;
     help) help; exit 1;;
     *) echo "Unrecognized command: $CMD"; help; exit 1;;
 esac
