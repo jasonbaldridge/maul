@@ -1,16 +1,18 @@
 maul
 ====
 
-A simple command-line access codebase for computing topic models with Mallet and language models with BerkeleyLM.
+A simple command-line access codebase for computing topic models with [Mallet](http://mallet.cs.umass.edu) and language models with [BerkeleyLM](https://code.google.com/p/berkeleylm/).
+
+Note: Mallet is used as a standard dependency. The code for BerkeleyLM is included directly in this project as there is no up-to-date published version of it.
 
 ## Installation
   
-To use it, you need to obtain and compile the code. Here's the recipe, with an attempt to be helpful if you are not an experience Unix user.
+To use it, you need to obtain and compile the code. Here's the recipe, with an attempt to be helpful if you are not an experienced Unix user.
 
-First, download the code and put the file on your Desktop (adjust as you like if you are experienced with Unix). Then, run the following commands.
+First, [download the code]() and put the file on your Desktop (adjust as you like if you are experienced with Unix). Then, run the following commands.
   
 ```
-$ tar xzf maul-xyz.tgz
+$ tar xzf maul-<version-info-to-be-added>.tgz
 $ cd maul
 $ ./build compile
 ```
