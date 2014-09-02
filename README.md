@@ -1,7 +1,7 @@
 maul
 ====
 
-A simple command-line access codebase for computing topic models with [Mallet](http://mallet.cs.umass.edu) and language models with [BerkeleyLM](https://code.google.com/p/berkeleylm/).
+A simple codebase to provide command-line access for computing topic models with [Mallet](http://mallet.cs.umass.edu) and language models with [BerkeleyLM](https://code.google.com/p/berkeleylm/). Also, it has some data for others to try the stuff I did for [my blog post on SXSW proposal titles](http://www.peoplepattern.com/text-analytics-sxsw-proposals/) in `maul/data/sxsw`.
 
 Note: Mallet is used as a standard dependency. The code for BerkeleyLM is included directly in this project as there is no up-to-date published version of it.
 
