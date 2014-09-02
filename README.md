@@ -1,9 +1,23 @@
 maul
 ====
 
-A simple command-line access to computing topic models with Mallet. Well, not quite command line, but pretty much, if you don't mind doing it through SBT as specified below.
+A simple command-line access codebase for computing topic models with Mallet and language models with BerkeleyLM.
 
-## How to use it
+## Installation
+  
+To use it, you need to obtain and compile the code. Here's the recipe, with an attempt to be helpful if you are not an experience Unix user.
+
+First, download the code and put the file on your Desktop (adjust as you like if you are experienced with Unix). Then, run the following commands.
+  
+```
+$ tar xzf maul-xyz.tgz
+$ cd maul
+$ ./build compile
+```
+
+If this went smoothly, you should be ready to go!
+  
+## For topic modeling on 20 newsgroups data.
 
 First, you need some data, so go to the maul top-level and do the following:
 

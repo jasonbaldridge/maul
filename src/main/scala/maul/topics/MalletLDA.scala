@@ -22,11 +22,20 @@ object MalletLda {
 
     // Get the instances
     val allInstances = new InstanceList(malletPipeline)
-    val allFiles = new FileIterator(Array(datasetDir), FileIterator.STARTING_DIRECTORIES, true)
-    allInstances.addThruPipe(allFiles)
-
+    if (datasetDir.isDirectory) {
+      val allFiles = new FileIterator(
+        Array(datasetDir), FileIterator.STARTING_DIRECTORIES, true)
+      allInstances.addThruPipe(allFiles)
+    } else {
+      val instanceLines = io.Source.fromFile(datasetDir)
+        .getLines
+        .map(new Instance(_, "", "", ""))
+      allInstances.addThruPipe(instanceLines)
+    }
+    
     // Compute the topics
-    val lda = new ParallelTopicModel(numTopics, numTopics/10, 0.01)
+    val topicDivFactor = math.min(numTopics,10)
+    val lda = new ParallelTopicModel(numTopics, numTopics/topicDivFactor, 0.01)
     lda.printLogLikelihood = false
     lda.setTopicDisplay(500, 10)
     lda.addInstances(allInstances)
