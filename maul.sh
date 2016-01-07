@@ -14,7 +14,7 @@ SCALA_LIB="$HOME/.sbt/boot/scala-2.10.4/lib/scala-library.jar"
 
 CP="$MAUL_DIR/target/scala-2.10/classes:$SCALA_LIB:src/main/resources:$MANAGED_JARS"
 
-JAVA="$JAVA_HOME/bin/java"
+JAVA=`which java`
 JAVA_COMMAND="$JAVA $JAVA_MEM_FLAG -classpath $CP"
 
 CMD=$1
