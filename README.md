@@ -9,10 +9,10 @@ Note: Mallet is used as a standard dependency. The code for BerkeleyLM is includ
   
 To use it, you need to obtain and compile the code. Here's the recipe, with an attempt to be helpful if you are not an experienced Unix user.
 
-First, [download the code]() and put the file on your Desktop (adjust as you like if you are experienced with Unix). Then, run the following commands.
+First, clone this repository and compile the code.
   
 ```
-$ tar xzf maul-<version-info-to-be-added>.tgz
+$ git clone https://github.com/jasonbaldridge/maul.git
 $ cd maul
 $ ./build compile
 ```
@@ -64,3 +64,10 @@ There is also a script to try it out without SBT. Run the following command (ass
 $ ./maul.sh mallet-lda --num-topics 200 --num-iterations 1000 --num-threads 1 20news-bydate-train
 $ ./maul.sh factorie-lda --num-topics 200 --num-iterations 1000 --num-threads 1 --read-dirs 20news-bydate-train
 ```
+
+Here is an example of some further options that (a) turn off standard tokenization (useful if you have non-language data or just want to be sure to split on whitespace), (b) output topics to a named file, (c) output the topics as one word per line (each topic is headed by it's topic index with its words on following lines), and (d) specify the number of words to display per topic.
+
+```
+$ ./maul.sh mallet-lda --num-topics 200 --num-iterations 1000 --whitespace-tokenization --output topics-20news-output.txt --output-new-lines --words-to-display 100 20news-bydate-train
+```
+  

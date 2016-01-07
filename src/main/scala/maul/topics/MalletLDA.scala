@@ -14,14 +14,8 @@ object MalletLda {
     val datasetDir = new File(opts.data())
     val numTopics = opts.numTopics()
 
-    // Set up the output writer for producing the final CSV formatted results
-    val outputWriter = opts.output() match {
-      case "stdout" => new PrintWriter(System.out)
-      case file => new PrintWriter(new BufferedWriter(new FileWriter(new File(file))))
-    }
-
     // Get the instances
-    val allInstances = new InstanceList(malletPipeline)
+    val allInstances = new InstanceList(malletPipeline(opts.whitespaceTokenization()))
     if (datasetDir.isDirectory) {
       val allFiles = new FileIterator(
         Array(datasetDir), FileIterator.STARTING_DIRECTORIES, true)
@@ -37,15 +31,24 @@ object MalletLda {
     val topicDivFactor = math.min(numTopics,10)
     val lda = new ParallelTopicModel(numTopics, numTopics/topicDivFactor, 0.01)
     lda.printLogLikelihood = false
-    lda.setTopicDisplay(500, 10)
+    lda.setTopicDisplay(200, 10)
     lda.addInstances(allInstances)
     lda.setNumThreads(opts.numThreads())
     lda.numIterations = opts.numIterations()
     lda.estimate
-    println(lda.displayTopWords(opts.numWordsToDisplay(), false))
+
+    val tmStringRep = lda.displayTopWords(opts.numWordsToDisplay(), opts.outputNewLines())
+    if (opts.output.isDefined) {
+      val filename = opts.output()
+      val out = new BufferedWriter(new FileWriter(new File(filename)))
+      out.write(tmStringRep)
+      out.close
+    } else {
+      println(tmStringRep)
+    }
   }
   
-  def malletPipeline() = {
+  def malletPipeline(whitespaceTokenization: Boolean = false) = {
     import cc.mallet.pipe._
     import cc.mallet.util.CharSequenceLexer
 
@@ -53,7 +56,12 @@ object MalletLda {
     pipeList.add(new Target2Label)
     pipeList.add(new SaveDataInSource)
     pipeList.add(new Input2CharSequence(java.nio.charset.Charset.defaultCharset.displayName))
-    pipeList.add(new CharSequence2TokenSequence(CharSequenceLexer.LEX_ALPHA))
+
+    if (whitespaceTokenization)
+      pipeList.add(new CharSequence2TokenSequence(CharSequenceLexer.LEX_NONWHITESPACE_TOGETHER))
+    else
+      pipeList.add(new CharSequence2TokenSequence(CharSequenceLexer.LEX_ALPHA))
+        
     pipeList.add(new TokenSequenceLowercase)
     pipeList.add(new TokenSequenceRemoveStopwords(false, false))
     pipeList.add(new TokenSequence2FeatureSequence)
@@ -91,9 +99,22 @@ For usage see below:
     
     val numThreads = opt[Int]("num-threads", default=Some(1), validate = (0<),
       descr="The number of threadls to use.")
-    
-    val output = opt[String]("output", default=Some("stdout"),
+
+    val topicDisplayFreq = opt[Int]("topic-display-frequency",
+      default=Some(200),
+      validate = (0<),
+      descr="The periodic number of iterations after which to display current topics.")
+
+    val output = opt[String]("output",
       descr="The file to save the model. If unspecified, model is written to standard output.")
+
+    val whitespaceTokenization = opt[Boolean]("whitespace-tokenization",
+      default = Some(false),
+      descr = "Just tokenize by whitespace rather than using LEX_ALPHA. This is useful if you are processing non-language data.")
+    
+    val outputNewLines = opt[Boolean]("output-new-lines",
+      default = Some(false), noshort = true,
+      descr = "When outputting the final model, use long form with one word per line, rather than one topic per line.")
     
     val data = trailArg[String]("data",
       descr="The directory containing the documents to use for computing the topic model.")
