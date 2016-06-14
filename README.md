@@ -100,13 +100,14 @@ $ paste sxsw-full-output/proportions-of-topics.txt sxsw-full-output/topic-top-wo
 0.06254563154052081	boom 2nd pay live free, what's announces #ff add you're baby incline ♫ #soundtracking #funk end support great people
 0.12679484059381846	| back photo: health we're won't #london - ted century ride live ray! remix design (at work night sweet
 0.06400584083718666	& rt austin read lunch singing recession? local ways star me. love... weekend pretty finished @ world it's tonight
+```
 
 The file `vocab.txt.gz` simply lists all the words that are in any topic's top words.
 
 The file `document-topics.txt.gz` gives the topic distributions for each document. The first element is the document id, and the rest is Vowpal Wabbit format items with topic-id:topic-probability entries. Any topic with less than uniform (1/num-topics) probability is discarded.
 
 ```
-starling:maul jasonbaldridge$ gzcat sxsw-full-output/document-topics.txt.gz | head -5
+$ gzcat sxsw-full-output/document-topics.txt.gz | head -5
 0	0:0.010485220510416832 1:0.06409445494729427 2:0.17599010083915362 3:0.010377604247168225 4:0.011221814714589459 5:0.010617288320693221 6:0.010384568849183694 7:0.3401279360896533 8:0.35473656851476165 9:0.011964442967085698
 1	1:0.4827995709501295 3:0.2268786842969476 6:0.11692109416288506 8:0.017789152740568706 9:0.11797978870846952
 2	0:0.01560742139573266 1:0.09540563944252761 2:0.26196412965710336 3:0.015447232836237279 4:0.016703853858049993 5:0.015804006480972164 6:0.01545759975969883 7:0.017769692255028294 8:0.03951487940178537 9:0.5063255449128644
