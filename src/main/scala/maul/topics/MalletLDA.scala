@@ -1,7 +1,9 @@
 package maul.topics
 
+import maul.io._
+
 object MalletLda {
-  
+
   import java.io._
   import cc.mallet.topics._
   import cc.mallet.types._
@@ -21,12 +23,24 @@ object MalletLda {
         Array(datasetDir), FileIterator.STARTING_DIRECTORIES, true)
       allInstances.addThruPipe(allFiles)
     } else {
-      val instanceLines = io.Source.fromFile(datasetDir)
-        .getLines
-        .map(new Instance(_, "", "", ""))
+
+      // If a file with document ids is provided, get the iterator for those. Otherwise,
+      // get a stream starting from 0 as ids.
+      val documentIds = if (opts.documentIdsFile.isDefined) {
+        getSource(opts.documentIdsFile()).getLines
+      } else {
+        Stream.from(0).toIterator
+      }
+
+      val documents = getSource(datasetDir).getLines
+
+      val instanceLines = for ((id,doc) <- documentIds.zip(documents)) yield {
+        new Instance(doc,"",id,"")
+      }
+
       allInstances.addThruPipe(instanceLines)
     }
-    
+
     // Compute the topics
     val topicDivFactor = math.min(numTopics,10)
     val lda = new ParallelTopicModel(numTopics, numTopics/topicDivFactor, 0.01)
@@ -37,17 +51,90 @@ object MalletLda {
     lda.numIterations = opts.numIterations()
     lda.estimate
 
+    // Get the standard string representation of the top words in each topic.
     val tmStringRep = lda.displayTopWords(opts.numWordsToDisplay(), opts.outputNewLines())
+
     if (opts.output.isDefined) {
-      val filename = opts.output()
-      val out = new BufferedWriter(new FileWriter(new File(filename)))
+      val out = createWriter(opts.output())
       out.write(tmStringRep)
       out.close
     } else {
       println(tmStringRep)
     }
+
+    // Output full information with topics, topic proportions, and document-topic proportions.
+    if (opts.outputdir.isDefined) {
+
+      val outputdir = new File(opts.outputdir())
+      outputdir.mkdirs
+
+      // Output the top words per topic. The words for each topic are given on the row
+      // corresponding to the 0-based topic index.
+      val standardTopicOutputWriter = createWriter(outputdir,"topic-top-words.txt")
+      val vocab = collection.mutable.HashSet.empty[String]
+      for {
+        line <- tmStringRep.split("\n")
+        Array(id,_,topWords) = line.split("\t")
+        words = topWords.split(" ")
+      } {
+        words.foreach(word => vocab += word)
+        standardTopicOutputWriter.write(topWords+"\n")
+      }
+      standardTopicOutputWriter.close
+
+      // Write out the words that occured in the top-k of at least one topic.
+      val vocabWriter = createWriter(outputdir,"vocab.txt.gz")
+      vocab.toSeq.sorted.foreach(word=>vocabWriter.write(word+"\n"))
+      vocabWriter.close
+
+      // Output the overall proportions of each topic in the corpus.
+      val topicProportionsWriter = createWriter(outputdir,"proportions-of-topics.txt")
+      val topicCounts = lda.tokensPerTopic
+      val numTopics = topicCounts.length
+      val totalCount = topicCounts.sum.toDouble
+      val topicProportions = topicCounts.map(_/totalCount)
+      topicProportions.foreach(p => topicProportionsWriter.write(p+"\n"))
+      topicProportionsWriter.close
+
+      // Do this if you want the topic word weights.
+      //lda.printTopicWordWeights(new File(outputdir,"topic-word-weights.txt"))
+
+      if (opts.outputDocumentTopicDistributions()) {
+        // Write the document topic proportions. Begin by outputting to a tmp file with the full
+        // output given by Mallet.
+        val tmpDocTopicsFile = tmpFile("document-topics")
+        lda.printDocumentTopics(tmpDocTopicsFile)
+
+        // Next, read that tmp file and output only topics above uniform probability for the document,
+        // and use Vowpal Wabbit format with topicId:topicProportion values.
+        val documentTopicsWriter = createWriter(outputdir,"document-topics.txt.gz")
+        val minTopicProbability = math.min(.01,1.0/numTopics)
+
+        for {
+          line <- getSource(tmpDocTopicsFile).getLines.drop(1)
+          rowNumber :: docId :: proportions = line.split("\t").toList
+        } {
+
+          val docTopicProportions = (for {
+            List(topicIdStr,topicProbStr) <- proportions.grouped(2)
+            topicProb = topicProbStr.toDouble
+            if topicProb > minTopicProbability
+            topicId = topicIdStr.toInt
+          } yield (topicId,topicProb)).toSeq
+
+          if (docTopicProportions.length > 0) {
+            documentTopicsWriter.write(docId + "\t")
+            val paired = for ((topicId, topicProb) <- docTopicProportions.sortBy(_._1)) yield
+            s"$topicId:$topicProb"
+            documentTopicsWriter.write(paired.mkString(" ")+"\n")
+          }
+
+        }
+        documentTopicsWriter.close
+      }
+    }
   }
-  
+
   def malletPipeline(whitespaceTokenization: Boolean = false) = {
     import cc.mallet.pipe._
     import cc.mallet.util.CharSequenceLexer
@@ -61,64 +148,11 @@ object MalletLda {
       pipeList.add(new CharSequence2TokenSequence(CharSequenceLexer.LEX_NONWHITESPACE_TOGETHER))
     else
       pipeList.add(new CharSequence2TokenSequence(CharSequenceLexer.LEX_ALPHA))
-        
+
     pipeList.add(new TokenSequenceLowercase)
     pipeList.add(new TokenSequenceRemoveStopwords(false, false))
     pipeList.add(new TokenSequence2FeatureSequence)
     new SerialPipes(pipeList)
   }
 
-}
-
-
-
-
-/**
-  * An object that sets up the configuration for command-line options using
-  * Scallop and returns the options, ready for use.
-  */
-object MalletLdaOpts {
-
-  import org.rogach.scallop._
-  
-  def apply(args: Array[String]) = new ScallopConf(args) {
-    banner("""
-For usage see below:
-""")
-
-    val help = opt[Boolean]("help", noshort = true, descr = "Show this message")
-    
-    val numTopics = opt[Int]("num-topics", default=Some(100), validate = (0<),
-      descr="The number of topics to use in the model.")
-    
-    val numWordsToDisplay = opt[Int]("words-to-display", default=Some(20), validate = (0<),
-      descr="The number of words per topic to show in the output.")
-    
-    val numIterations = opt[Int]("num-iterations", default=Some(1000), validate = (0<),
-      descr="The maximum number of iterations to perform.")
-    
-    val numThreads = opt[Int]("num-threads", default=Some(1), validate = (0<),
-      descr="The number of threadls to use.")
-
-    val topicDisplayFreq = opt[Int]("topic-display-frequency",
-      default=Some(200),
-      validate = (0<),
-      descr="The periodic number of iterations after which to display current topics.")
-
-    val output = opt[String]("output",
-      descr="The file to save the model. If unspecified, model is written to standard output.")
-
-    val whitespaceTokenization = opt[Boolean]("whitespace-tokenization",
-      default = Some(false),
-      descr = "Just tokenize by whitespace rather than using LEX_ALPHA. This is useful if you are processing non-language data.")
-    
-    val outputNewLines = opt[Boolean]("output-new-lines",
-      default = Some(false), noshort = true,
-      descr = "When outputting the final model, use long form with one word per line, rather than one topic per line.")
-    
-    val data = trailArg[String]("data",
-      descr="The directory containing the documents to use for computing the topic model.")
-    
-  }
-  
 }
